@@ -4,7 +4,7 @@ import sqlite3
 
 app = Flask(__name__)
 
-DATABASE = r"D:\WorkSpace\Projects\LightSense_IoT\database\mydb.sqlite"
+DATABASE = r"/home/hphuc15/Workspace/Project/LightSense_IoT/database/mydb.sqlite"
 # data = [] # Fake database
 
 def get_db():
