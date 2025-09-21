@@ -1,9 +1,8 @@
-CREATE DATABASE IF NOT EXISTS lightsense_db;
-USE lightsense_db;
+CREATE DATABASE IF NOT EXISTS bh1750_db;
+USE bh1750_db;
 
 CREATE TABLE IF NOT EXISTS data (
     id INT AUTO_INCREMENT PRIMARY KEY,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    temperature FLOAT,
-    humidity FLOAT
+    lux FLOAT
 )
