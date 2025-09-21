@@ -30,15 +30,15 @@
     <h1>Sensor Data History</h1>
     <table>
         <tr>
-            <th>Timestamp (UTC)</th>
-            <th>Data</th>
+            <th>Timestamp</th>
+            <th>Lux (lx)</th>
         </tr>
-        {% for record in data %}
+        {% for record in records %}
         <tr>
             <td>{{ record.timestamp }}</td>
-            <td>{{ record.data }}</td>
+            <td>{{ record.lux }}</td>
         </tr>
         {% endfor %}
     </table>
 </body>
-</html>
+</html> 
