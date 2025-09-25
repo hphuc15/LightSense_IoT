@@ -1,14 +1,21 @@
 from flask import Flask, request, render_template, jsonify
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+import os
 import mysql.connector
 
-app = Flask(__name__)
+# Load environment variables from .env file
+load_dotenv()
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
 
+
+app = Flask(__name__)
 
 @app.route("/")
 def home():
     return "<h1>Homepage</h1>"
-
 
 @app.route("/api/data", methods=["POST"])
 def receive_data():
@@ -23,9 +30,9 @@ def receive_data():
 
     with mysql.connector.connect(
         host = "localhost",
-        user = "root",
-        password = "hongphucv9@",
-        database = "bh1750_db"
+        user = DB_USER,
+        password = DB_PASSWORD,
+        database = DB_NAME
     ) as conn:
         with conn.cursor() as curs:
             insert_query = "INSERT INTO data (timestamp, lux) VALUES (%s, %s)"
@@ -35,14 +42,13 @@ def receive_data():
 
     return '{"status": "record succes"}'
 
-
 @app.route("/history", methods=["GET"])
 def get_data():
     with mysql.connector.connect(
         host = "localhost",
-        user = "root",
-        password = "hongphucv9@",
-        database = "bh1750_db"
+        user = DB_USER,
+        password = DB_PASSWORD,
+        database = DB_NAME
     ) as conn:
         with conn.cursor(dictionary = True) as curs:
             select_query = "SELECT timestamp, lux FROM data ORDER BY timestamp DESC"
