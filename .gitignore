@@ -1,2 +1,8 @@
 venv/
 .env
+
+# Ignore PlatformIO build files
+firmware/.pio/
+firmware/build/
+firmware/libdeps/
+firmware/*.pioenvs
