@@ -1,0 +1,2 @@
+sample_data.sql: sample data for testing.
+firmware_platformIO: firmware for PlatformIO, based on Arduino framework.
