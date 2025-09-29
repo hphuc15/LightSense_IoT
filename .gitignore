@@ -1,8 +1,15 @@
 venv/
 .env
 
-# Ignore PlatformIO build files
-firmware/.pio/
-firmware/build/
-firmware/libdeps/
-firmware/*.pioenvs
+# PlatformIO
+/test/firmware_platformIO/.pio/
+/test/firmware_platformIO/build/
+/test/firmware_platformIO/libdeps/
+/test/firmware_platformIO/*.pioenvs
+
+# ESP-IDF
+/firmware/build/
+/firmware/managed_components/
+/firmware/.vscode/
+/firmware/.devcontainer/
+/firmware/sdkconfig.old
