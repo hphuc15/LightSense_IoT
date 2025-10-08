@@ -8,29 +8,15 @@
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
+#include "esp_event.h"
+#include "config.h"
 
-#define I2C_MASTER_SDA_IO 21     // GPIO number for I2C master clock
-#define I2C_MASTER_SCL_IO 22     // GPIO number for I2C master data
-#define I2C_MASTER_NUM I2C_NUM_0 // I2C port number for master
-#define I2C_MASTER_FREQ_HZ 100000
-
-#define BH1750_SENSOR_ADDR BH1750_I2C_ADDRESS_DEFAULT   // Address of the BH1750 sensor
-#define BH1750_MEASUREMENT_MODE BH1750_CONTINUE_1LX_RES // Measurement mode of BH1750 sensor
 
 #define ESP_MAXIMUM_RETRY 3
 
-static const char *TAG_I2C = "i2c";
-static const char *TAG_BH1750 = "bh1750";
-static const char *TAG_w = "wifi"; // WiFi Tag
-
 static EventGroupHandle_t s_wifi_event_group; // con trỏ đến wifi event group
 static int s_retry_num = 0;
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT BIT1
 
-#define ESP_WIFI_SSID "B9 106_5G"
-#define ESP_WIFI_PSW "B91062005@"
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
 
 /**
  * @brief I2C Master Initialization
@@ -48,17 +34,26 @@ static void wifi_init();
 
 
 
-
-
-
 void app_main(void)
 {
+// ======================================== WIFI ======================================
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    // Initialize WiFi
+    wifi_init();
+
 // ================================== BH1750 + I2C ==================================
     // I2C Initialize
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t dev_handle;
     i2c_master_init(&bus_handle, &dev_handle);
-    ESP_LOGI(TAG_I2C, "I2C initialized succesfully!");
+    ESP_LOGI(TAG_i, "I2C initialized succesfully!");
     // Sensor Initialize
     float bh1750_data;
     bh1750_handle_t bh1750_sensor;
@@ -72,7 +67,7 @@ void app_main(void)
         esp_err_t bh1750_status = bh1750_get_data(bh1750_sensor, &bh1750_data);
         if (bh1750_status == ESP_OK)
         {
-            ESP_LOGI(TAG_BH1750, "Light: %.2f lux\n", bh1750_data);
+            ESP_LOGI(TAG_b, "Light: %.2f lux\n", bh1750_data);
         }
         else
         {
@@ -80,44 +75,6 @@ void app_main(void)
         }
         vTaskDelay(pdMS_TO_TICKS(500));
     }
-
-// ======================================== WIFI ======================================
-    // Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-    // Initialize WiFi
-    wifi_init();
-}
-
-
-
-
-
-
-
-
-// ============================== I2C+BH1750 Module Function ==========================
-static void i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *dev_handle)
-{
-    i2c_master_bus_config_t bus_config = {
-        .i2c_port = I2C_MASTER_NUM,
-        .scl_io_num = I2C_MASTER_SCL_IO,
-        .sda_io_num = I2C_MASTER_SDA_IO,
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true};
-    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, bus_handle));
-
-    i2c_device_config_t dev_config = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = BH1750_SENSOR_ADDR,
-        .scl_speed_hz = I2C_MASTER_FREQ_HZ};
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_config, dev_handle));
 }
 
 
@@ -196,4 +153,22 @@ static void wifi_init()
         ESP_LOGE(TAG_w, "UNEXPECTED EVENT");
     }
 }
-// =======================================================================================
+
+// ============================== I2C+BH1750 Module Function ==========================
+static void i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *dev_handle)
+{
+    i2c_master_bus_config_t bus_config = {
+        .i2c_port = I2C_MASTER_NUM,
+        .scl_io_num = I2C_MASTER_SCL_IO,
+        .sda_io_num = I2C_MASTER_SDA_IO,
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = true};
+    ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, bus_handle));
+
+    i2c_device_config_t dev_config = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = BH1750_SENSOR_ADDR,
+        .scl_speed_hz = I2C_MASTER_FREQ_HZ};
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_config, dev_handle));
+}

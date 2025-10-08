@@ -18,7 +18,8 @@
   "files.associations": {
     "cstddef": "c",
     "unity_test_runner.h": "c",
-    "esp_log.h": "c"
+    "esp_log.h": "c",
+    "config.h": "c"
   },
   "idf.portWin": "COM3",
   "idf.flashType": "UART"
