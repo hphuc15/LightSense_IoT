@@ -37,3 +37,19 @@ DB_NAME = <database_name>
 venv/
 .env
 ```
+
+
+## How to use?
+### Clone the project to your local
+If you use Windows:
+```bash
+git clone https://github.com/hphuc15/LightSense_IoT.git
+cd .\LightSense_IoT
+notepad .\server\.env
+```
+Fill your DB information:
+```.env
+DB_USER = <database_user>
+DB_PASSWORD = <database_password>
+DB_NAME = <database_name>
+```
