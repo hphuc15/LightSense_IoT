@@ -1,11 +1,12 @@
 #pragma once
+#include "esp_wifi.h"
 
 // =========================== WIFI CONFIG ==============================
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT BIT1
 #define ESP_WIFI_SSID "B9 106"
 #define ESP_WIFI_PSW "B91062005@"
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
+#define ESP_WIFI_MAX_RETRY 3
+#define ESP_WIFI_FAIL_BIT BIT0
+#define ESP_WIFI_CONNECTED_BIT BIT1
 
 
 // =========================== I2C CONFIG ================================
