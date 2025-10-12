@@ -53,3 +53,10 @@ DB_USER = <database_user>
 DB_PASSWORD = <database_password>
 DB_NAME = <database_name>
 ```
+
+Set up venv:
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```

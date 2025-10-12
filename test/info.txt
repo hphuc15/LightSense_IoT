@@ -1,2 +1,6 @@
-sample_data.sql: sample data for testing.
-firmware_platformIO: firmware for PlatformIO, based on Arduino framework.
+http-module: đang viết module http cho firmware
+
+AfterCompletedProject: Cải thiện module WiFi, làm sau khi xây dựng xong cấu trúc project.
+esp_http_client_example.c: Example của ESP-IDF, esp_http_client, đọc hiểu flow set up giao thức http.
+firmware_platformIO: firmware viết bằng Arduino trên PlatformIO.
+sample_data.sql: data mẫu cho database
