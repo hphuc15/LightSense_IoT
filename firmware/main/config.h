@@ -1,9 +1,8 @@
 #pragma once
-#include "esp_wifi.h"
 
 // =========================== WIFI CONFIG ==============================
-#define ESP_WIFI_SSID "B9 106"
-#define ESP_WIFI_PSW "B91062005@"
+#define ESP_WIFI_STA_SSID "SSIoT-02"
+#define ESP_WIFI_STA_PSW "SSIoT-02"
 #define ESP_WIFI_MAX_RETRY 3
 #define ESP_WIFI_FAIL_BIT BIT0
 #define ESP_WIFI_CONNECTED_BIT BIT1

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include <cJSON.h>
 #include "driver/i2c_master.h"
 #include "bh1750.h"
 #include "freertos/FreeRTOS.h"
@@ -15,11 +16,9 @@
 static int s_retry_num = 0;
 static EventGroupHandle_t s_wifi_event_group;
 
-/**
- * @brief I2C Master Initialization
- */
-static void i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *dev_handle);
 
+
+// ============================== I2C+BH1750 Module Function ==========================
 /**
  * @brief WiFi Event Handler Functions
  */
@@ -32,6 +31,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     }
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
+        xEventGroupClearBits(s_wifi_event_group, ESP_WIFI_CONNECTED_BIT);
         if (s_retry_num < ESP_WIFI_MAX_RETRY)
         {
             esp_wifi_connect();
@@ -75,8 +75,8 @@ static esp_err_t wifi_init()
 
     wifi_config_t wifi_network_cfg = {
         .sta = {
-            .ssid = ESP_WIFI_SSID,
-            .password = ESP_WIFI_PSW}};
+            .ssid = ESP_WIFI_STA_SSID,
+            .password = ESP_WIFI_STA_PSW}};
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_network_cfg));
@@ -87,12 +87,12 @@ static esp_err_t wifi_init()
     EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group, ESP_WIFI_CONNECTED_BIT | ESP_WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
     if (bits & ESP_WIFI_CONNECTED_BIT)
     {
-        ESP_LOGI(TAG_w, "Connected to SSID: %s", ESP_WIFI_SSID);
+        ESP_LOGI(TAG_w, "Connected to SSID: %s", ESP_WIFI_STA_SSID);
         return ESP_OK;
     }
     else if (bits & ESP_WIFI_FAIL_BIT)
     {
-        ESP_LOGI(TAG_w, "Failed to connect to SSID: %s", ESP_WIFI_SSID);
+        ESP_LOGI(TAG_w, "Failed to connect to SSID: %s", ESP_WIFI_STA_SSID);
         return ESP_FAIL;
     }
     else
@@ -102,12 +102,22 @@ static esp_err_t wifi_init()
     }
 }
 
-// ============================== I2C+BH1750 Module Function ==========================
-typedef struct {
-    float light;
-    char timestamp[30];
-} data_send_t;
+/**
+ * @brief Check current Wi-Fi connection status.
+ * This function checks whether the station interface is currently connected
+ * to an access point.
+ * @return true  If Wi-Fi is connected.
+ * @return false If Wi-Fi is disconnected.
+ */
+bool is_wifi_connected(){
+    EventBits_t bits = xEventGroupGetBits(s_wifi_event_group);
+    return (bits & ESP_WIFI_CONNECTED_BIT);
+}
 
+// ============================== I2C+BH1750 Module Function ==========================
+/**
+ * @brief I2C Master Initialization
+ */
 static void i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_handle_t *dev_handle)
 {
     i2c_master_bus_config_t bus_config = {
@@ -125,40 +135,37 @@ static void i2c_master_init(i2c_master_bus_handle_t *bus_handle, i2c_master_dev_
         .scl_speed_hz = I2C_MASTER_FREQ_HZ};
     ESP_ERROR_CHECK(i2c_master_bus_add_device(*bus_handle, &dev_config, dev_handle));
 }
-/***
- * @brief Convert data to JSON format Function, call this function after bh1750_get_data(). 
- * Add timestamp to JSON.
+/**
+ * @brief Convert data to JSON format and add timestamp to JSON, call this function after bh1750_get_data().
  * @param bh1750_data The sensor data just taken
- * @return JSON format
+ * @param post_data The variable to storaged JSON
  */
-char* data2json(float bh1750_data){
+void data2json(float bh1750_data, char *post_data)
+{
     time_t current_time;
     time(&current_time);
+    char *timestamp = ctime(&current_time);
+    timestamp[strcspn(timestamp, "\n")] = '\0';
 
-    data_send_t data_send;
-    data_send.light = bh1750_data;
-    strncpy(data_send.timestamp, ctime(&current_time), sizeof(data_send.timestamp)-1);
-    data_send.timestamp[sizeof(data_send.timestamp)-1] = '\0'; // đảm bảo kết thúc chuỗi
+    cJSON *json_data_obj = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json_data_obj, "light", bh1750_data);
+    cJSON_AddStringToObject(json_data_obj, "timestamp", timestamp);
 
-    char post_data[50];
-    snprintf(
-        post_data,
-        sizeof(post_data),
-        "{\"light\": %.2f, \"timestamp\": %s}",
-        data_send.light, 
-        data_send.timestamp
-    );
-    return post_data;
+    char *json_data_str = cJSON_PrintUnformatted(json_data_obj);
+    strcpy(post_data, json_data_str);
+
+    free(json_data_str);
+    cJSON_Delete(json_data_obj);
 }
 
 
 
 void app_main(void)
 {
-// ======================================== WIFI ======================================
+    // ======================================== WIFI ======================================
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();
-    if(ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
@@ -166,7 +173,7 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
     wifi_init();
 
-// ================================== BH1750 + I2C ==================================
+    // ================================== BH1750 + I2C ==================================
     // I2C Initialize
     i2c_master_bus_handle_t bus_handle;
     i2c_master_dev_handle_t dev_handle;
@@ -181,27 +188,31 @@ void app_main(void)
     ESP_ERROR_CHECK(bh1750_set_measure_mode(bh1750_sensor, BH1750_MEASUREMENT_MODE));
     vTaskDelay(pdMS_TO_TICKS(180));
 
-
-
     // ===================================== Main loop =======================================
+    char post_data[128];
     while (1)
     {
         vTaskDelay(pdMS_TO_TICKS(500));
-        ret = esp_wifi_connect();
-        while(ret == ESP_FAIL){
+        while(!is_wifi_connected()){
             ESP_LOGE(TAG_w, "WiFi is disconnected");
-            ESP_LOGI(TAG_w, "Attempting to connect AP");
-            ret = esp_wifi_connect();
-            if(ret == ESP_OK){
-                break;
-            }
+            // Kết nối lại wifi:
+            esp_wifi_disconnect();
+            esp_wifi_connect();
+            vTaskDelay(pdMS_TO_TICKS(3000));
+            // Future: Thay việc kết nối lại bằng việc đổi thành AP mode để mở portal config wifi
         }
-        esp_err_t bh1750_status = bh1750_get_data(bh1750_sensor, &bh1750_data);
-        char *bh1750_data_json = data2json(bh1750_data);
-        /*
-        Hàm http gửi data dùng ở đây, sau khi dòng data2json(bh1750_data); chạy xong, dùng JSON bh1750_data_json để gửi
-        */
 
+
+        esp_err_t bh1750_status = bh1750_get_data(bh1750_sensor, &bh1750_data);
+        // JSON format
+        data2json(bh1750_data, post_data);
+        // Test JSON:
+        // printf("%s", post_data);
+
+        /*
+        Hàm http gửi data dùng ở đây, sau khi dòng data2json(bh1750_data);
+        chạy xong, dùng JSON bh1750_data_json để gửi
+        */
 
         // Log data to Serial Monitor
         if (bh1750_status == ESP_OK)
