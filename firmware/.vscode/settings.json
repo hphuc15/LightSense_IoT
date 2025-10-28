@@ -15,12 +15,28 @@
     "--query-driver=D:\\Program_Files\\Espressif\\tools\\xtensa-esp-elf\\esp-14.2.0_20241119\\xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
     "--compile-commands-dir=${workspaceFolder}\\build"
   ],
-  "files.associations": {
-    "cstddef": "c",
-    "unity_test_runner.h": "c",
-    "esp_log.h": "c",
-    "config.h": "c"
-  },
   "idf.portWin": "COM3",
-  "idf.flashType": "UART"
+  "idf.flashType": "UART",
+  "files.associations": {
+    "param.h": "c",
+    "ss_wifi.h": "c",
+    "esp_http_server.h": "c",
+    "wifi_manager.h": "c",
+    "gpio.h": "c",
+    "nvs_flash.h": "c",
+    "button_handler.h": "c",
+    "freertos.h": "c",
+    "task.h": "c",
+    "esp_wifi.h": "c",
+    "led_handler.h": "c",
+    "http_client.h": "c",
+    "esp_http_client.h": "c",
+    "cjson.h": "c",
+    "esp_log.h": "c",
+    "random": "c",
+    "array": "c",
+    "string": "c",
+    "string_view": "c",
+    "span": "c"
+  }
 }

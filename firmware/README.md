@@ -1,51 +1,32 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C5 | ESP32-C6 | ESP32-C61 | ESP32-H2 | ESP32-H21 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | --------- | -------- | --------- | -------- | -------- | -------- |
+# WIFI MODULE
+## Functions
+### ```void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)```
+This Function use to handle with STA or AP event that include:
+- ```WIFI_EVENT_STA_START```:
+- ```WIFI_EVENT_STA_DISCONNECTED```:
+- ```IP_EVENT_STA_GOT_IP```:
+- ```WIFI_EVENT_AP_STADISCONNECTED```:
+- ```WIFI_EVENT_AP_STACONNECTED```:
 
-# Basic I2C Master Example
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
 
-## Overview
 
-This example demonstrates basic usage of I2C driver by reading and writing from a I2C connected sensor:
+### ```void wifi_init_sta(char *sta_ssid, char *sta_password)```
+### ```void wifi_init_softap(void)```
+### ```void dhcp_set_captiveportal_url(void)```
+### ```esp_err_t root_get_handler(httpd_req_t *req)```
+### ```void url_decode(char *buf)```
 
-If you have a new I2C application to go (for example, read the temperature data from external sensor with I2C interface), try this as a basic template, then add your own code.
+### ```esp_err_t root_post_handler(httpd_req_t *req)```
 
-## How to use example
+### ```esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)```
 
-### Hardware Required
+### ```httpd_handle_t start_webserver(void)```
 
-To run this example, you should have an Espressif development board based on a chip listed in supported targets as well as a MPU9250. MPU9250 is a inertial measurement unit, which contains a accelerometer, gyroscope as well as a magnetometer, for more information about it, you can read the [datasheet of the MPU9250 sensor](https://invensense.tdk.com/wp-content/uploads/2015/02/PS-MPU-9250A-01-v1.1.pdf).
 
-#### Pin Assignment
 
-**Note:** The following pin assignments are used by default, you can change these in the `menuconfig` .
-
-|                  | SDA             | SCL           |
-| ---------------- | -------------- | -------------- |
-| ESP I2C Master   | I2C_MASTER_SDA | I2C_MASTER_SCL |
-| MPU9250 Sensor   | SDA            | SCL            |
-
-For the actual default value of `I2C_MASTER_SDA` and `I2C_MASTER_SCL` see `Example Configuration` in `menuconfig`.
-
-**Note:** There's no need to add an external pull-up resistors for SDA/SCL pin, because the driver will enable the internal pull-up resistors.
-
-### Build and Flash
-
-Enter `idf.py -p PORT flash monitor` to build, flash and monitor the project.
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
+Viết vô cách cài đặt:
 ```bash
-I (328) example: I2C initialized successfully
-I (338) example: WHO_AM_I = 71
-I (338) example: I2C de-initialized successfully
+idf.py add-dependency "espressif/bh1750^2.0.0"
+idf.py add-dependency "espressif/cjson^1.7.19"
 ```
-
-## Troubleshooting
-
-(For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you as soon as possible.)
