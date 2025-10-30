@@ -11,7 +11,8 @@ esp_netif_t *netif_ap = NULL;
 
 extern const char root_start[] asm("_binary_root_html_start");
 extern const char root_end[] asm("_binary_root_html_end");
-extern sta_info_t sta_info;
+
+extern post_data_t post_data;
 
 const httpd_uri_t root_get = {
     .uri = "/",
@@ -23,14 +24,7 @@ const httpd_uri_t root_post = {
     .method = HTTP_POST,
     .handler = wifi_manager_root_post_handler};
 
-/**
- * @brief WiFi event handler callback function
- *
- * @param arg         Pointer to user-defined data passed during event registration.
- * @param event_base  Event base that identifies the type of eventevent.
- * @param event_id    Specific event ID within the given event base.
- * @param event_data  Pointer to event-specific data provided by the system.
- */
+
 void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_AP_STACONNECTED)
@@ -77,31 +71,18 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id
     }
 }
 
-/**
- * @brief Check if the STA (Station) mode is currently connected.
- *
- * @return true  If the STA mode is connected to an access point.
- * @return false If the STA mode is not connected.
- */
 bool wifi_manager_is_sta_connected()
 {
     EventBits_t bits = xEventGroupGetBits(s_wifi_event_group);
     return (bits & ESP_WIFI_STA_CONNECTED_BIT);
 }
-/**
- * Check if the AP (Access Point) mode is currently active.
- *
- * @return true     If the AP mode is active and ready to accept client connections.
- * @return false    If the AP mode is inactive.
- */
+
 bool wifi_manager_is_ap_active()
 {
     EventBits_t bits = xEventGroupGetBits(s_wifi_event_group);
     return (bits & ESP_WIFI_AP_ACTIVE_BIT);
 }
-/**
- * @brief Stop AP mode and STA mode, destroy neitif.
- */
+
 void wifi_manager_stop(void)
 {
     // esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler);
@@ -125,18 +106,13 @@ void wifi_manager_stop(void)
     ESP_LOGI("WiFi", "WiFi stopped succesfully");
     vTaskDelay(pdMS_TO_TICKS(10));
 }
-/**
- * @brief Initialize STA mode
- * @param *ssid STA SSID that taken from captive portal to parameting to config STA.
- * @param *password STA PASSWORD that taken from captive portal to parameting to config STA.
- */
+
 void wifi_manager_init_sta(sta_info_t *sta_info)
 {
     if (wifi_manager_is_ap_active())
     {
         wifi_manager_stop();
     }
-    // Lỗi nằm ở lần đầu chạy STA, NVS chưa có gì, mai tính tiếp
     if (netif_sta == NULL)
     {
         netif_sta = esp_netif_create_default_wifi_sta();
@@ -150,7 +126,7 @@ void wifi_manager_init_sta(sta_info_t *sta_info)
 
     wifi_config_t wifi_config = {0};
 
-    wifi_manager_nvs_load_config(sta_info, main_server_ip);
+    wifi_manager_nvs_load_config(&post_data);
     if (strlen(sta_info->ssid) == 0 && strlen(sta_info->password) == 0)
     {
         wifi_manager_init_softap();
@@ -164,9 +140,7 @@ void wifi_manager_init_sta(sta_info_t *sta_info)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 }
-/**
- * @brief Initialize AP mode then open captive portal to config STA information and Server IP
- */
+
 void wifi_manager_init_softap(void)
 {
     if (wifi_manager_is_sta_connected())
@@ -220,7 +194,7 @@ void wifi_manager_init_softap(void)
     start_dns_server(&config);
 }
 
-#ifdef CONFIG_ESP_ENABLE_DHCP_CAPTIVEPORTAL // Giúp client tự động biết địa chỉ portal cấu hình wifi khi kết nối vào AP mode
+#ifdef CONFIG_ESP_ENABLE_DHCP_CAPTIVEPORTAL
 void dhcp_set_captiveportal_url(void)
 {
     // get the IP of the access point to redirect to
@@ -247,7 +221,6 @@ void dhcp_set_captiveportal_url(void)
 }
 #endif // CONFIG_ESP_ENABLE_DHCP_CAPTIVEPORTAL
 
-// HTTP GET Handler
 esp_err_t wifi_manager_root_get_handler(httpd_req_t *req)
 {
     const uint32_t root_len = root_end - root_start;
@@ -259,10 +232,6 @@ esp_err_t wifi_manager_root_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-/**
- * @brief POST data decode function
- * @param buf the data string that need to convert
- */
 void url_decode(char *buf)
 {
     char *src = buf;
@@ -322,7 +291,7 @@ void url_decode(char *buf)
     }
     *dst = '\0';
 }
-// HTTP POST handler
+
 esp_err_t wifi_manager_root_post_handler(httpd_req_t *req)
 {
     char buf[256];                                        // ssid max là 32, password là 8-63 -> không cần xử lí trường hợp form data quá dài
@@ -344,26 +313,27 @@ esp_err_t wifi_manager_root_post_handler(httpd_req_t *req)
         n++;
         token = strtok(NULL, "=&");
     }
-    strncpy(sta_info.ssid, tmp[1], sizeof(sta_info.ssid) - 1);
-    sta_info.ssid[sizeof(sta_info.ssid) - 1] = '\0';
-    strncpy(sta_info.password, tmp[3], sizeof(sta_info.password) - 1);
-    sta_info.password[sizeof(sta_info.password) - 1] = '\0';
-    strncpy(main_server_ip, tmp[5], sizeof(main_server_ip) - 1);
-    main_server_ip[sizeof(main_server_ip) - 1] = '\0';
+    // Lưu vào post_data
+    strncpy(post_data.sta_info.ssid, tmp[1], sizeof(post_data.sta_info.ssid) - 1);
+    post_data.sta_info.ssid[sizeof(post_data.sta_info.ssid) - 1] = '\0';
+    strncpy(post_data.sta_info.password, tmp[3], sizeof(post_data.sta_info.password) - 1);
+    post_data.sta_info.password[sizeof(post_data.sta_info.password) - 1] = '\0';
+    strncpy(post_data.server_ip, tmp[5], sizeof(post_data.server_ip) - 1);
+    post_data.server_ip[sizeof(post_data.server_ip) - 1] = '\0';
 
-    ESP_LOGI(TAG, "SSID: %s, Password: %s, Server IP: %s", sta_info.ssid, sta_info.password, main_server_ip);
+    ESP_LOGI(TAG, "SSID: %s, Password: %s, Server IP: %s", post_data.sta_info.ssid, post_data.sta_info.password, post_data.server_ip);
 
-    wifi_manager_nvs_save_config(&sta_info, main_server_ip); // Lưu data từ POST form vào NVS
+    wifi_manager_nvs_save_config(&post_data); // Lưu data từ POST form vào NVS
 
     // Chuyển sang STA
     esp_wifi_stop();
     esp_wifi_deinit();
-    wifi_manager_init_sta(&sta_info);
+    wifi_manager_init_sta(&post_data.sta_info);
 
     return ESP_OK;
 }
-// Hàm lưu POST form data (ssid, password, server_ip):
-void wifi_manager_nvs_save_config(sta_info_t *sta_info, char *main_server_ip)
+
+void wifi_manager_nvs_save_config(post_data_t *post_data)
 {
     // Init NVS
     esp_err_t err = nvs_flash_init();
@@ -384,12 +354,12 @@ void wifi_manager_nvs_save_config(sta_info_t *sta_info, char *main_server_ip)
     }
     // Store and WiFi Config to NVS
     ESP_LOGI(TAG_NVS, "Writing STA config to NVS...");
-    err = nvs_set_str(my_nvs_handle, "SSID", sta_info->ssid);
+    err = nvs_set_str(my_nvs_handle, "SSID", post_data->sta_info.ssid);
     if (err != ESP_OK)
     {
         ESP_LOGI(TAG_NVS, "Failed to write SSID");
     }
-    err = nvs_set_str(my_nvs_handle, "Password", sta_info->password);
+    err = nvs_set_str(my_nvs_handle, "Password", post_data->sta_info.password);
     if (err != ESP_OK)
     {
         ESP_LOGI(TAG_NVS, "Failed to write Password");
@@ -419,7 +389,7 @@ void wifi_manager_nvs_save_config(sta_info_t *sta_info, char *main_server_ip)
     }
     // Store and Server IP to NVS
     ESP_LOGI(TAG_NVS, "Writing Server IP to NVS...");
-    err = nvs_set_str(my_nvs_handle, "IP", main_server_ip);
+    err = nvs_set_str(my_nvs_handle, "IP", post_data->server_ip);
     if (err != ESP_OK)
     {
         ESP_LOGI(TAG_NVS, "Failed to write Server IP");
@@ -439,7 +409,8 @@ void wifi_manager_nvs_save_config(sta_info_t *sta_info, char *main_server_ip)
     ESP_LOGI(TAG, "NVS handle closed.");
     // ============================= Lưu Server IP vào NVS =================================================
 }
-void wifi_manager_nvs_load_config(sta_info_t *sta_info, char *main_server_ip)
+
+void wifi_manager_nvs_load_config(post_data_t *post_data)
 {
     // Init NVS
     esp_err_t err = nvs_flash_init();
@@ -465,12 +436,12 @@ void wifi_manager_nvs_load_config(sta_info_t *sta_info, char *main_server_ip)
     err = nvs_get_str(my_nvs_handle, "SSID", NULL, &required_size);
     if (err == ESP_OK)
     {
-        err = nvs_get_str(my_nvs_handle, "SSID", sta_info->ssid, &required_size);
+        err = nvs_get_str(my_nvs_handle, "SSID", post_data->sta_info.ssid, &required_size);
     }
     err = nvs_get_str(my_nvs_handle, "Password", NULL, &required_size);
     if (err == ESP_OK)
     {
-        err = nvs_get_str(my_nvs_handle, "Password", sta_info->password, &required_size);
+        err = nvs_get_str(my_nvs_handle, "Password", post_data->sta_info.password, &required_size);
     }
     ESP_LOGI(TAG, "Committing updates in NVS...");
     err = nvs_commit(my_nvs_handle);
@@ -496,7 +467,7 @@ void wifi_manager_nvs_load_config(sta_info_t *sta_info, char *main_server_ip)
     err = nvs_get_str(my_nvs_handle, "IP", NULL, &required_size);
     if (err == ESP_OK)
     {
-        err = nvs_get_str(my_nvs_handle, "IP", main_server_ip, &required_size);
+        err = nvs_get_str(my_nvs_handle, "IP", post_data->server_ip, &required_size);
     }
     ESP_LOGI(TAG, "Committing updates in NVS...");
     err = nvs_commit(my_nvs_handle);
@@ -509,7 +480,7 @@ void wifi_manager_nvs_load_config(sta_info_t *sta_info, char *main_server_ip)
     ESP_LOGI(TAG, "NVS handle closed.");
     // =====================================================================================================
 }
-// HTTP Error (404) Handler - Redirects all requests to the root page
+
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 {
     // Set status
@@ -522,6 +493,7 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
     ESP_LOGI(TAG, "Redirecting to root");
     return ESP_OK;
 }
+
 httpd_handle_t wifi_manager_start_webserver(void)
 {
     httpd_handle_t server = NULL;

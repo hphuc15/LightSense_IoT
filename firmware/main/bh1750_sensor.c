@@ -4,7 +4,6 @@ static const char *TAG_I2C = "I2C";
 
 bh1750_handle_t bh1750_handle;
 bh1750_data_t bh1750_data;
-char bh1750_json_data[128];
 
 i2c_master_bus_handle_t bus_handle;
 i2c_master_dev_handle_t dev_handle;

@@ -37,6 +37,7 @@
     "array": "c",
     "string": "c",
     "string_view": "c",
-    "span": "c"
+    "span": "c",
+    "dns_server.h": "c"
   }
 }
