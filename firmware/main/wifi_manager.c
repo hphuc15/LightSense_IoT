@@ -126,11 +126,10 @@ void wifi_manager_init_sta(sta_info_t *sta_info)
 
     wifi_config_t wifi_config = {0};
 
-    wifi_manager_nvs_load_config(&post_data);
+    wifi_manager_nvs_load_config(&post_data); // Lấy data trong nvs lưu vào biến post_data_t post_data
     if (strlen(sta_info->ssid) == 0 && strlen(sta_info->password) == 0)
     {
         wifi_manager_init_softap();
-        // ERROR: Ở đây có 1 lỗi là lần đầu dùng thì NVS chưa có gì dẫn tới STA không biết kết nối tới đâu
     }
     // truyền cấu hình ssid và password lấy từ portal vào cấu hình wifi driver
     strncpy((char *)wifi_config.sta.ssid, sta_info->ssid, sizeof(wifi_config.sta.ssid) - 1);

@@ -1,5 +1,9 @@
 // Line 22
 #include "button_handler.h"
+#include "http_client.h"
+
+extern http_client_t client; // Biến toàn cục trong main
+extern post_data_t post_data; // trong main
 
 volatile bool button_pressed = false;
 volatile TickType_t press_start_time = 0;
@@ -22,9 +26,13 @@ void IRAM_ATTR button_isr_handler(void *arg)
 void button_long_press_callback(void)
 {
     ESP_LOGI("BUTTON", "Button long pressed 3s: execute: execute action");
-    //wifi_manager_stop();
+    // wifi_manager_stop();
     vTaskDelay(pdMS_TO_TICKS(50));
+    xEventGroupClearBits(s_wifi_event_group, ESP_WIFI_STA_CONNECTED_BIT);
+    http_client_deinit(&client); // Vấn đề biến toàn cục http_client_t client
     wifi_manager_init_softap();
+    vTaskDelay(pdMS_TO_TICKS(100));
+    http_client_init(&client, post_data.server_ip, 5000);    
 }
 
 void button_task(void *arg)

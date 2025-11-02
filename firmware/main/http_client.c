@@ -35,6 +35,7 @@ esp_err_t http_client_init(http_client_t *client, char *server_ip, uint16_t port
     sprintf(url, "http://%s:%d", client->server_ip, client->server_port);
     esp_http_client_config_t config = {
         .url = url,
+        .transport_type = HTTP_TRANSPORT_OVER_TCP,
         .event_handler = http_client_event_handler};
 
     client->client_handle = esp_http_client_init(&config);
@@ -75,4 +76,12 @@ esp_err_t http_client_post(http_client_t *client, char *path, char *json_data)
     }
 
     return err;
+}
+
+void http_client_deinit(http_client_t *client){
+    if(client && client->client_handle){
+        esp_http_client_cleanup(client->client_handle);
+        client->client_handle = NULL;
+        ESP_LOGI(TAG_HTTP, "HTTP client deinitialized!");
+    }
 }

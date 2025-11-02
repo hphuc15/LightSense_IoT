@@ -33,14 +33,14 @@ void bh1750_init(void)
     ESP_ERROR_CHECK(bh1750_create(bus_handle, BH1750_SENSOR_ADDR, &bh1750_handle));
     ESP_ERROR_CHECK(bh1750_power_on(bh1750_handle));
     vTaskDelay(pdMS_TO_TICKS(10));
-    ESP_ERROR_CHECK(bh1750_set_measure_mode(bh1750_handle, BH1750_MEASUREMENT_MODE));
+    bh1750_set_measure_mode(bh1750_handle, BH1750_MEASUREMENT_MODE);
     vTaskDelay(pdMS_TO_TICKS(50));
 }
 
 void bh1750_get_json_string(bh1750_handle_t bh1750_handler, bh1750_data_t *bh1750_data, char *bh1750_json_data)
 {
     // Light:
-    ESP_ERROR_CHECK(bh1750_get_data(bh1750_handler, &bh1750_data->light));
+    bh1750_get_data(bh1750_handler, &bh1750_data->light);
 
     // Timestamp:
     time(&bh1750_data->timestamp);                      // Get current time than save to bh1750_data.timestamp

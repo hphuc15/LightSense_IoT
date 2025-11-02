@@ -38,6 +38,11 @@ typedef struct {
 extern esp_err_t http_client_init(http_client_t *client, char *server_ip, uint16_t port);
 
 /**
+ * @brief Deinitialize HTTP client
+ */
+void http_client_deinit(http_client_t *client);
+
+/**
  * @brief Send an HTTP POST request with JSON payload.
  * 
  * This function sends a POST request to the given path using the initialized 

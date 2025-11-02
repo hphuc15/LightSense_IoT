@@ -20,18 +20,15 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 
-#define ESP_WIFI_AP_SSID                    "ESP32_Config"
-#define ESP_WIFI_AP_PSW                     "ESP32_Config"
-#define ESP_WIFI_AP_MAX_STA_CONN            4
-#define ESP_WIFI_MAX_RETRY                  4
-#define ESP_WIFI_STA_CONNECTED_BIT          BIT0
-#define ESP_WIFI_STA_FAIL_BIT               BIT1
-#define ESP_WIFI_AP_ACTIVE_BIT              BIT2
+#define ESP_WIFI_AP_SSID "ESP32_Config"
+#define ESP_WIFI_AP_PSW "ESP32_Config"
+#define ESP_WIFI_AP_MAX_STA_CONN 4
+#define ESP_WIFI_MAX_RETRY 4
+#define ESP_WIFI_STA_CONNECTED_BIT BIT0
+#define ESP_WIFI_STA_FAIL_BIT BIT1
+#define ESP_WIFI_AP_ACTIVE_BIT BIT2
 
 extern EventGroupHandle_t s_wifi_event_group;
-
-
-
 
 /**
  * @brief Structure that stores Wi-Fi station (STA) credentials.
@@ -57,12 +54,9 @@ typedef struct
     char server_ip[40];  /**< Target server IP address or hostname (null-terminated string) */
 } post_data_t;
 
-
-
-
 /**
  * @brief Handle Wi-Fi related events (e.g. STA start, got IP, disconnect, etc.)
- * 
+ *
  * @param arg Optional user argument passed during registration
  * @param event_base The base ID of the event (e.g. WIFI_EVENT, IP_EVENT)
  * @param event_id The specific event ID (e.g. WIFI_EVENT_STA_START)
@@ -82,7 +76,7 @@ extern void wifi_manager_init_sta(sta_info_t *sta_info);
 /**
  * @brief Initializes ESP32 in SoftAP mode to create a captive portal.
  *
- * This function starts an Access Point and runs an embedded web server 
+ * This function starts an Access Point and runs an embedded web server
  * allowing users to input Wi-Fi credentials for STA connection.
  */
 extern void wifi_manager_init_softap(void);
@@ -94,7 +88,6 @@ extern void wifi_manager_init_softap(void);
  * and cleans up allocated memory or event handlers.
  */
 extern void wifi_manager_stop(void);
-
 
 #ifdef CONFIG_ESP_ENABLE_DHCP_CAPTIVEPORTAL
 /**
@@ -186,7 +179,7 @@ extern void wifi_manager_nvs_erase_config(void);
  * GET and POST requests for the captive portal and Wi-Fi configuration pages.
  *
  * @return
- *  - A valid `httpd_handle_t` if the server was started successfully.  
+ *  - A valid `httpd_handle_t` if the server was started successfully.
  *  - `NULL` if the server failed to start.
  *
  * @note The server typically runs on port 80 and serves the embedded HTML content.
