@@ -17,7 +17,7 @@ app = Flask(__name__)
 def home():
     return "<h1>Homepage</h1>"
 
-@app.route("/api/data", methods=["POST"])
+@app.route("/data", methods=["POST"])
 def receive_data():
     new_data = request.get_json()
     if not new_data:
@@ -25,7 +25,7 @@ def receive_data():
     
     record = {
         "timestamp": datetime.now(timezone.utc),
-        "lux": new_data["lux"]
+        "light": new_data["light"]
     }
 
     with mysql.connector.connect(
@@ -35,8 +35,8 @@ def receive_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor() as curs:
-            insert_query = "INSERT INTO data (timestamp, lux) VALUES (%s, %s)"
-            insert_query_argument = (record["timestamp"], record["lux"])
+            insert_query = "INSERT INTO data (timestamp, light) VALUES (%s, %s)"
+            insert_query_argument = (record["timestamp"], record["light"])
             curs.execute(insert_query, insert_query_argument)
             conn.commit()
 
@@ -51,7 +51,7 @@ def get_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor(dictionary = True) as curs:
-            select_query = "SELECT timestamp, lux FROM data ORDER BY timestamp DESC"
+            select_query = "SELECT timestamp, light FROM data ORDER BY timestamp DESC"
             curs.execute(select_query)
             records = curs.fetchall()
 
