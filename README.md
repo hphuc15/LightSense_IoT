@@ -5,6 +5,7 @@
 project/
 ├── server/                 # Flask backend source code
 ├── firmware/               # Microcontroller firmware
+├── hardware/               # Circuit PCB and schematic 
 ├── database/               # Database
 ├── docs/                   # Project documentation
 ├── test/                   
@@ -41,13 +42,25 @@ venv/
 
 ## How to use?
 ### Clone the project to your local
-If you use Windows:
+1. Clone the project
+Clone the repository and navigate into the directory:
 ```bash
 git clone https://github.com/hphuc15/LightSense_IoT.git
 cd .\LightSense_IoT
-notepad .\server\.env
 ```
-Fill your DB information:
+2. Configure Environment Variables
+Create the .env file inside the server/ directory and fill it with your database connection details.
+
+On Windows:
+```bash
+notepad .\server\.env # You can edit by any others text editor
+```
+On Linux, MacOS:
+```bash
+nano .\server\.env
+```
+
+Fill in your DB information:
 ```.env
 DB_USER = <database_user>
 DB_PASSWORD = <database_password>
