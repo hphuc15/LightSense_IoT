@@ -45,18 +45,32 @@ void wifi_led_task(void *arg)
     while (1)
     {
         EventBits_t bits = xEventGroupGetBits(wifi_event_group);
+        if (bits & ESP_WIFI_AP_ACTIVE_BIT)
+        {
+            led_mode = LED_MODE_BLINK;
+        }
+        else if (bits & ESP_WIFI_STA_CONNECTED_BIT)
+        {
+            led_mode = LED_MODE_ON;
+        }
+
+        /*
         if (bits & ESP_WIFI_STA_CONNECTED_BIT)
         {
             led_mode = LED_MODE_ON;
         }
-        else if (bits & ESP_WIFI_STA_FAIL_BIT)
+        else if (!(bits & ESP_WIFI_STA_CONNECTED_BIT))
         {
-            led_mode = LED_MODE_OFF;
+            if (!(bits & ESP_WIFI_AP_ACTIVE_BIT))
+            {
+                led_mode = LED_MODE_OFF;
+            }
         }
         else if (bits & ESP_WIFI_AP_ACTIVE_BIT)
         {
             led_mode = LED_MODE_BLINK;
         }
+        */
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

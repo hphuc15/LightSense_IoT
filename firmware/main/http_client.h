@@ -1,4 +1,3 @@
-// C:\Users\hphuc\Desktop\http-prac
 #ifndef HTTP_CLIENT_H
 #define HTTP_CLIENT_H
 

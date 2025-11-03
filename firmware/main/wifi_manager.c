@@ -1,4 +1,4 @@
-// line 139
+// remove server ip info to modular programing (future)
 #include "wifi_manager.h"
 
 int s_wifi_retry_num = 0;
@@ -173,6 +173,7 @@ void wifi_manager_init_softap(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+    xEventGroupSetBits(s_wifi_event_group, ESP_WIFI_AP_ACTIVE_BIT);
 
     esp_netif_ip_info_t ip_info;
     esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_AP_DEF"), &ip_info);

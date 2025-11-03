@@ -13,7 +13,7 @@
 #define I2C_MASTER_SDA_IO               21     // GPIO for I2C SDA
 #define I2C_MASTER_SCL_IO               22     // GPIO for I2C SCL
 #define I2C_MASTER_NUM                  I2C_NUM_0 // I2C port number for master
-#define I2C_MASTER_FREQ_HZ 100000
+#define I2C_MASTER_FREQ_HZ              100000
 
 #define BH1750_SENSOR_ADDR              BH1750_I2C_ADDRESS_DEFAULT   // Address of the BH1750 sensor
 #define BH1750_MEASUREMENT_MODE         BH1750_CONTINUE_1LX_RES // Measurement mode of BH1750 sensor

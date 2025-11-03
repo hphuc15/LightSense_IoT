@@ -1,4 +1,3 @@
-// C:\Users\hphuc\Desktop\http-prac
 #include "http_client.h"
 
 const char *TAG_HTTP = "HTTP_CLIENT";
