@@ -30,12 +30,14 @@
     <h1>Sensor Data History</h1>
     <table>
         <tr>
-            <th>Timestamp</th>
+            <th>Date</th>
+            <th>Time</th>
             <th>Light (lx)</th>
         </tr>
         {% for record in records %}
         <tr>
-            <td>{{ record.timestamp }}</td>
+            <td>{{ record.date }}</td>
+            <td>{{ record.time }}</td>
             <td>{{ record.light }}</td>
         </tr>
         {% endfor %}

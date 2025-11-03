@@ -23,10 +23,7 @@ def receive_data():
     if not new_data:
         return '{"status": "record failed"}', 400
     
-    record = {
-        "timestamp": datetime.now(timezone.utc),
-        "light": new_data["light"]
-    }
+    light = new_data["light"]
 
     with mysql.connector.connect(
         host = "localhost",
@@ -35,8 +32,8 @@ def receive_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor() as curs:
-            insert_query = "INSERT INTO data (timestamp, light) VALUES (%s, %s)"
-            insert_query_argument = (record["timestamp"], record["light"])
+            insert_query = "INSERT INTO data (light) VALUES (%s)"
+            insert_query_argument = (light,)
             curs.execute(insert_query, insert_query_argument)
             conn.commit()
 
@@ -51,7 +48,7 @@ def get_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor(dictionary = True) as curs:
-            select_query = "SELECT timestamp, light FROM data ORDER BY timestamp DESC"
+            select_query = "SELECT date, time, light FROM data ORDER BY date DESC, time DESC"
             curs.execute(select_query)
             records = curs.fetchall()
 
