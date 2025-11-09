@@ -1,7 +1,0 @@
-build/
-*.o
-*.elf
-*.bin
-*.old
-.vscode/
-.devcontainer/
