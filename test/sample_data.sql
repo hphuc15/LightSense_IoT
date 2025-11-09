@@ -1,7 +1,7 @@
-USE bh1750_db;
+USE sensor;
 
 -- Sample data
-INSERT INTO data (timestamp, lux) VALUES
+INSERT INTO bh1750 (timestamp, lux) VALUES
 ("2025-09-21 14:01:12", 123.45),
 ("2025-09-21 13:59:44", 119.87),
 ("2025-09-21 13:58:10", 115.23),

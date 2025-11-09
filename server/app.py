@@ -32,7 +32,7 @@ def receive_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor() as curs:
-            insert_query = "INSERT INTO data (light) VALUES (%s)"
+            insert_query = "INSERT INTO bh1750 (light) VALUES (%s)"
             insert_query_argument = (light,)
             curs.execute(insert_query, insert_query_argument)
             conn.commit()
@@ -48,7 +48,7 @@ def get_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor(dictionary = True) as curs:
-            select_query = "SELECT date, time, light FROM data ORDER BY date DESC, time DESC"
+            select_query = "SELECT date, time, light FROM bh1750 ORDER BY date DESC, time DESC"
             curs.execute(select_query)
             records = curs.fetchall()
 
