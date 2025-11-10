@@ -49,6 +49,7 @@ void bh1750_get_json_string(bh1750_handle_t bh1750_handler, bh1750_data_t *bh175
 
     // to json
     cJSON *json_data_obj = cJSON_CreateObject();
+    cJSON_AddNumberToObject(json_data_obj, "sensor_id", SENSOR_ID);
     cJSON_AddNumberToObject(json_data_obj, "light", bh1750_data->light);
     cJSON_AddStringToObject(json_data_obj, "timestamp", timestamp);
 

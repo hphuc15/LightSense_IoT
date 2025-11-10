@@ -10,6 +10,8 @@
 #include "bh1750.h"
 #include "time.h"
 
+#define SENSOR_ID 15 // Giải pháp khác: trường sensor id vào captive portal
+
 #define I2C_MASTER_SDA_IO               21     // GPIO for I2C SDA
 #define I2C_MASTER_SCL_IO               22     // GPIO for I2C SCL
 #define I2C_MASTER_NUM                  I2C_NUM_0 // I2C port number for master
