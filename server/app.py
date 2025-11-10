@@ -23,6 +23,7 @@ def receive_data():
     if not new_data:
         return '{"status": "record failed"}', 400
     
+    sensor_id = new_data["sensor_id"]
     light = new_data["light"]
 
     with mysql.connector.connect(
@@ -32,8 +33,8 @@ def receive_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor() as curs:
-            insert_query = "INSERT INTO bh1750 (light) VALUES (%s)"
-            insert_query_argument = (light,)
+            insert_query = "INSERT INTO bh1750 (sensor_id, light) VALUES (%s, %s)"
+            insert_query_argument = (sensor_id, light,)
             curs.execute(insert_query, insert_query_argument)
             conn.commit()
 
