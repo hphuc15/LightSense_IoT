@@ -49,7 +49,7 @@ def get_data():
         database = DB_NAME
     ) as conn:
         with conn.cursor(dictionary = True) as curs:
-            select_query = "SELECT date, time, light FROM bh1750 ORDER BY date DESC, time DESC"
+            select_query = "SELECT sensor_id, date, time, light FROM bh1750 ORDER BY date DESC, time DESC LIMIT 10"
             curs.execute(select_query)
             records = curs.fetchall()
 
