@@ -38,7 +38,7 @@ void app_main(void)
         bh1750_get_json_string(bh1750_handle, &bh1750_data, bh1750_json_data);
         if (wifi_manager_is_sta_connected())
         {
-            http_client_post(&client, "/data", bh1750_json_data);
+            http_client_post(&client, "api/data/postData", bh1750_json_data); // "api/data/postData" là path trong drogon còn Flask là "/data"
             ESP_LOGI("BH1750", "Data: %s", bh1750_json_data);
         }
         bh1750_json_data[0] = '\0';
