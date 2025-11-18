@@ -61,7 +61,7 @@ esp_err_t http_client_post(http_client_t *client, char *path, char *json_data)
     snprintf(url, sizeof(url), "http://%s:%d/%s", client->server_ip, client->server_port, path);
     esp_http_client_set_url(client->client_handle, url);
     esp_http_client_set_method(client->client_handle, HTTP_METHOD_POST);
-    esp_http_client_set_header(client->client_handle, "Content-Type", "Application/json");
+    esp_http_client_set_header(client->client_handle, "Content-Type", "application/json");
     esp_http_client_set_post_field(client->client_handle, json_data, strlen(json_data));
 
     esp_err_t err = esp_http_client_perform(client->client_handle);
