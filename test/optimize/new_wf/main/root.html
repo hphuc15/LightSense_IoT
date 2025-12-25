@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .label-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            accent-color: #3498db;
+        }
+
+        .checkbox-label {
+            font-weight: normal;
+            color: #2c3e50;
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+
+        .server-section {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .server-section.hidden {
+            display: none;
+        }
+
+        .server-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>ESP32 Configuration</h1>
+            <p class="subtitle">Configure WiFi settings and server connection</p>
+        </header>
+
+        <form class="config-form" id="configForm">
+            <div class="form-group">
+                <label for="ssid">SSID</label>
+                <input type="text" id="ssid" name="ssid" placeholder="Enter your WiFi network name" required>
+                <div class="label-info">The name of your WiFi network</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your WiFi password" required>
+                <div class="label-info">Password for your WiFi network</div>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="sendToServer" name="sendToServer">
+                    <label for="sendToServer" class="checkbox-label">More Options</label>
+                </div>
+            </div>
+
+            <div id="serverSection" class="server-section hidden">
+                <div class="form-group">
+                    <label for="serverIp">Server IP Address</label>
+                    <input type="text" id="serverIp" name="serverIp" placeholder="e.g., 192.168.1.100">
+                    <div class="label-info">IP address</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="serverPort">Server Port</label>
+                    <input type="text" id="serverPort" name="serverPort" placeholder="e.g., 5000">
+                    <div class="label-info">Port number (default: 5000 if empty)</div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Save Configuration</button>
+
+            <div id="statusMessage" class="status"></div>
+        </form>
+
+        <footer>
+            <p>ESP32 Configuration Page | Connect to ESP32 AP to access this page</p>
+        </footer>
+    </div>
+</body>
+
+</html>
+
+<script>
+    // Toggle server section visibility
+    const sendToServerCheckbox = document.getElementById('sendToServer');
+    const serverSection = document.getElementById('serverSection');
+
+    sendToServerCheckbox.addEventListener('change', function () {
+        if (this.checked) {
+            serverSection.classList.remove('hidden');
+        } else {
+            serverSection.classList.add('hidden');
+        }
+    });
+
+    // Form submission
+    document.getElementById('configForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // Get form values
+        const ssid = document.getElementById('ssid').value.trim();
+        const password = document.getElementById('password').value;
+        const sendToServer = document.getElementById('sendToServer').checked;
+        const serverIp = document.getElementById('serverIp').value.trim();
+        const serverPort = document.getElementById('serverPort').value.trim();
+
+        // Validate form
+        const statusMessage = document.getElementById('statusMessage');
+
+        if (!ssid || !password) {
+            statusMessage.textContent = 'Please fill in both SSID and Password fields';
+            statusMessage.className = 'status error';
+            return;
+        }
+
+        if (sendToServer && !serverIp) {
+            statusMessage.textContent = 'Please enter Server IP address when "Server Configuration" is checked';
+            statusMessage.className = 'status error';
+            return;
+        }
+
+        // Prepare configuration data
+        const configData = {
+            wifi: {
+                ssid: ssid,
+                password: password
+            },
+            option: {
+                enabled: sendToServer
+            }
+        };
+
+        if (sendToServer) {
+            configData.option.server_ip = serverIp;
+            configData.option.server_port = serverPort || "5000"; // Default to 5000 if empty
+        }
+
+        // Show success message with configuration summary
+        let summary = `Configuration saved!<br><br>`;
+        summary += `<strong>WiFi:</strong><br>`;
+        summary += `SSID: ${ssid}<br><br>`;
+
+        if (sendToServer) {
+            summary += `<strong>Option:</strong><br>`;
+            summary += `Server IP: ${serverIp}<br>`;
+            summary += `Server Port: ${serverPort || "5000"}`;
+        } else {
+            summary += `<strong>Option:</strong> Disabled`;
+        }
+
+        statusMessage.innerHTML = summary;
+        statusMessage.className = 'status success';
+
+        // In a real ESP32 captive portal, you would send this data to the ESP32
+        // Example using fetch API to ESP32 endpoint:
+
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(configData)
+        })
+            .then(response => {
+                if (response.ok) {
+                    statusMessage.innerHTML = 'Configuration saved to ESP32 successfully!<br>ESP32 will restart with new settings.';
+                    statusMessage.className = 'status success';
+
+                    // Redirect or show restart message
+                    setTimeout(() => {
+                        window.location.href = '/restarting';
+                    }, 3000);
+                } else {
+                    throw new Error('Failed to save configuration');
+                }
+            })
+            .catch(error => {
+                statusMessage.textContent = 'Error saving configuration: ' + error.message;
+                statusMessage.className = 'status error';
+            });
+
+        // Clear status message after 8 seconds
+        setTimeout(() => {
+            statusMessage.className = 'status';
+            statusMessage.textContent = '';
+        }, 8000);
+    });
+
+    // Load saved configuration if available (for edit mode)
+    window.addEventListener('load', function () {
+        // In a real ESP32 captive portal, you might want to load existing configuration
+        /*
+        fetch('/get-config')
+            .then(response => response.json())
+            .then(config => {
+                if (config.wifi) {
+                    document.getElementById('ssid').value = config.wifi.ssid || '';
+                    document.getElementById('password').value = config.wifi.password || '';
+                }
+                
+                if (config.option && config.option.enabled) {
+                    document.getElementById('sendToServer').checked = true;
+                    document.getElementById('serverIp').value = config.option.ip || '';
+                    document.getElementById('serverPort').value = config.option.port || '';
+                    serverSection.classList.remove('hidden');
+                }
+            })
+            .catch(error => console.log('No saved configuration found'));
+        */
+
+        // Demo: Fill form with sample data for testing
+        // Uncomment to prefill with sample data
+        /*
+        document.getElementById('ssid').value = "MyHomeWiFi";
+        document.getElementById('password').value = "securepassword123";
+        document.getElementById('sendToServer').checked = true;
+        document.getElementById('serverIp').value = "192.168.1.100";
+        document.getElementById('serverPort').value = "8080";
+        serverSection.classList.remove('hidden');
+        */
+
+    });
+</script>
