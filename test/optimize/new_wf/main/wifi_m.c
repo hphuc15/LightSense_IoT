@@ -573,7 +573,6 @@ void WiFiManager_WiFi_Deinit(WiFiManager_t *wifi_manager)
     ESP_LOGI(TAG, "[WiFi Deinit] - WiFi deinitialized");
 }
 
-/*
 void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager)
 {
     wifi_manager->conf.ap = ESP_WIFI_AP_CONFIG_DEFAULT();
@@ -581,7 +580,7 @@ void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager)
     xEventGroupClearBits(wifi_manager->event.group, ESP_WIFI_EVENT_BIT_STACONF_START);
 
     WiFiManager_AP_Start(wifi_manager);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    xEventGroupWaitBits(wifi_manager->event.group, ESP_WIFI_EVENT_BIT_APSTART, pdFALSE, pdFALSE, portMAX_DELAY);
 
     WiFiManager_DHCP_Set_CaptivePortal_URL();
     WiFiManager_Start_WebServer(wifi_manager);
@@ -599,4 +598,3 @@ void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager)
     ESP_LOGI(TAG, "[STA_ConfigViaAP] Switch to STA Mode");
     WiFiManager_STA_Start(wifi_manager);
 }
-*/

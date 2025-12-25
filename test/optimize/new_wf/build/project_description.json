@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "esp32-bh1750",
-    "project_version":    "6397548-dirty",
+    "project_version":    "1c13509-dirty",
     "project_path":       "C:/Users/hphuc/Desktop/2SL_Incoming_Project/clone/light-sense-2sl/test/optimize/new_wf",
     "idf_path":           "D:/Program_Files/v5.5.1/esp-idf",
     "build_dir":          "C:/Users/hphuc/Desktop/2SL_Incoming_Project/clone/light-sense-2sl/test/optimize/new_wf/build",
