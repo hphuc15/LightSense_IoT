@@ -1,9 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2015-2025 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 /*               Notes about WiFi Programming
  *
  *  WiFi programming model can be depicted as following picture:
@@ -50,9 +44,13 @@
 #include "freertos/task.h"
 #include "wifi_m.h"
 
+#define LED_WIFI_GPIO_NUM GPIO_NUM_2
+
 void app_main(void)
 {
-  WiFiManager_t wm;
+  WiFiManager_t wm = {0};
+  wm.conf.ap = ESP_WIFI_AP_CONFIG_DEFAULT();
+  WiFiManager_WiFi_Init(&wm);
 
   WiFiManager_STA_ConfigViaAP(&wm);
 
@@ -62,5 +60,5 @@ void app_main(void)
   }
 }
 
-// Test và hoàn thiện hàm deinit và hàm Auto
 // Thêm cơ chế dừng retry sta khi đã retry quá số lần tối đa
+// Xử lí more options trong Captive Portal

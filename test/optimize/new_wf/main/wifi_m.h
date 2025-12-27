@@ -83,17 +83,46 @@ typedef struct WiFiManager_t
  *
  * @param [in]*wifimanager WiFi Manager handle
  */
-esp_err_t WiFiManager_NVS_Write_STA(WiFiManager_t *wifi_manager);
+esp_err_t WiFiManager_NVS_WriteSTA(WiFiManager_t *wifi_manager);
 
 /**
  * @brief Read STA configuration from NVS to wifi_manager.
  *
- * @param [in]*wifim_manager WiFi Manager handle
+ * @param [in]*wifi_manager WiFi Manager handle
  */
-esp_err_t WiFiManager_NVS_Read_STA(WiFiManager_t *wifi_manager);
+esp_err_t WiFiManager_NVS_ReadSTA(WiFiManager_t *wifi_manager);
 
+/**
+ * @brief Initialize the WiFi stack and related components for the WiFi Manager.
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure that manages all WiFi states.
+ */
 void WiFiManager_WiFi_Init(WiFiManager_t *wifi_manager);
+
+/**
+ * @brief Start WiFi in Station (STA) mode.
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure.
+ */
 void WiFiManager_STA_Start(WiFiManager_t *wifi_manager);
+
+/**
+ * @brief Start WiFi in Access Point (AP) mode.
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure.
+ */
 void WiFiManager_AP_Start(WiFiManager_t *wifi_manager);
+
+/**
+ * @brief Stop WiFi and release related resources.
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure.
+ */
 void WiFiManager_WiFi_Stop(WiFiManager_t *wifi_manager);
+
+/**
+ * @brief Configure WiFi Station settings via Access Point mode
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure.
+ */
 void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager);

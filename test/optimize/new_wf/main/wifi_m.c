@@ -1,30 +1,4 @@
 #include "wifi_m.h"
-/* Yêu cầu:
-- Khởi tạo AP mode với SSID: ESP32_Config, PSW: ESP32_Config
-- Cho phép thiết bị khác kết nối vào esp32
-- Open captive portal để gửi 1 số data tới ESP32 (cụ thể là STA identify và Server IP)
-*/
-
-/*debug func*/
-#define DEBUG_EVENT_GROUP(eg, tag)                                                                                     \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        if (eg == NULL)                                                                                                \
-        {                                                                                                              \
-            ESP_LOGE(tag, "Event Group is NULL!");                                                                     \
-        }                                                                                                              \
-        else                                                                                                           \
-        {                                                                                                              \
-            EventBits_t b = xEventGroupGetBits(eg);                                                                    \
-            ESP_LOGW(tag, "[STA_START, STADISCONNECTED, STA_CONNECTED, AP_START, STA_CONF_START]: [%d%d%d%d%d] 0x%lX", \
-                     (b & BIT0) ? 1 : 0, /* STA Start */                                                               \
-                     (b & BIT1) ? 1 : 0, /* STA Disconnected */                                                        \
-                     (b & BIT2) ? 1 : 0, /* STA Connected */                                                           \
-                     (b & BIT3) ? 1 : 0, /* AP Start */                                                                \
-                     (b & BIT4) ? 1 : 0, /* STA Config */                                                              \
-                     b);                                                                                               \
-        }                                                                                                              \
-    } while (0)
 
 static const char *TAG = "[WiFi]";
 
@@ -109,11 +83,26 @@ static void WiFiManager_STA_Event_Handler(void *arg, esp_event_base_t event_base
     }
 }
 
-static void WiFiManager_DHCP_Set_CaptivePortal_URL(void)
+static void WiFiManager_DHCP_Set_CaptivePortal_URL(WiFiManager_t *wifi_manager)
 {
+    esp_err_t ret;
+
+    // get a handle to configure DHCP with
+    esp_netif_t *netif = wifi_manager->netif_ap;
+    if (!netif)
+    {
+        ESP_LOGE(TAG, "[DHCP] netif_ap is null");
+        return;
+    }
+
     // get the IP of the access point to redirect to
     esp_netif_ip_info_t ip_info;
-    esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_AP_DEF"), &ip_info); // Get AP IP
+    ret = esp_netif_get_ip_info(netif, &ip_info); // Get AP IP
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "[DHCP] Failed to get IP info, error: %s", esp_err_to_name(ret));
+        return;
+    }
 
     char ip_addr[16];
     inet_ntoa_r(ip_info.ip.addr, ip_addr, 16); // Convert IPv4 (uint32_t) to string ("a.b.c.d") format
@@ -125,13 +114,33 @@ static void WiFiManager_DHCP_Set_CaptivePortal_URL(void)
     strcpy(captiveportal_uri, "http://");
     strcat(captiveportal_uri, ip_addr);
 
-    // get a handle to configure DHCP with
-    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
-
     // set the DHCP option 114
-    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_netif_dhcps_stop(netif));
-    ESP_ERROR_CHECK(esp_netif_dhcps_option(netif, ESP_NETIF_OP_SET, ESP_NETIF_CAPTIVEPORTAL_URI, captiveportal_uri, strlen(captiveportal_uri)));
-    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_netif_dhcps_start(netif));
+    ret = esp_netif_dhcps_stop(netif);
+    if (ret != ESP_OK && ret != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED)
+    {
+        ESP_LOGW(TAG, "DHCP stop warning: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    ret = esp_netif_dhcps_option(netif, ESP_NETIF_OP_SET, ESP_NETIF_CAPTIVEPORTAL_URI, captiveportal_uri, strlen(captiveportal_uri));
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "[DHCP] - Failed to set DHCP option: %s", esp_err_to_name(ret));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "[DHCP] Captive Portal URI set: %s", &captiveportal_uri);
+    }
+
+    ret = esp_netif_dhcps_start(netif);
+    if (ret != ESP_OK && ret != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STARTED)
+    {
+        ESP_LOGW(TAG, "Failed to start DHCP: %s", esp_err_to_name(ret));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "[DHCP] Server started succesfully");
+    }
 }
 
 /**
@@ -154,7 +163,12 @@ static httpd_uri_t root_get = {
     .handler = WiFiManager_Root_Get_Handler};
 
 /**
- * @brief Parsing JSON post data. Save STA configuration to wifi_manager
+ * @brief Parse JSON POST data and save STA configuration and optional settings.
+ *
+ * @param wifi_manager Pointer to the WiFiManager_t structure.
+ * @param string       JSON string received from POST data.
+ *
+ * @return ESP_OK on success, ESP_FAIL on error.
  */
 static esp_err_t WiFiManager_Parse_JSON(WiFiManager_t *wifi_manager, char *string)
 {
@@ -183,6 +197,15 @@ static esp_err_t WiFiManager_Parse_JSON(WiFiManager_t *wifi_manager, char *strin
         {
             strncpy((char *)wifi_manager->conf.sta.password, password->valuestring, sizeof(wifi_manager->conf.sta.password) - 1);
             wifi_manager->conf.sta.password[sizeof(wifi_manager->conf.sta.password) - 1] = '\0';
+
+            if (strlen(password->valuestring) > 0)
+            {
+                wifi_manager->conf.sta.threshold.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+            }
+            else
+            {
+                wifi_manager->conf.sta.threshold.authmode = WIFI_AUTH_OPEN;
+            }
         }
     }
 
@@ -224,6 +247,7 @@ static esp_err_t WiFiManager_Parse_JSON(WiFiManager_t *wifi_manager, char *strin
 
     cJSON_Delete(root);
 
+    ESP_LOGI(TAG, "[Parse JSON] ssid = %s, password = %s, options json = %s", wifi_manager->conf.sta.ssid, wifi_manager->conf.sta.password, wifi_manager->portal.options_json);
     return ESP_OK;
 }
 
@@ -259,7 +283,7 @@ static esp_err_t WiFiManager_Root_Post_Handler(httpd_req_t *req)
     const char *resp_str = "Data received";
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
 
-    WiFiManager_NVS_Write_STA(wifi_manager);
+    WiFiManager_NVS_WriteSTA(wifi_manager);
     vTaskDelay(pdMS_TO_TICKS(10));
 
     ESP_LOGI(TAG, "[Captive Portal] Configuration received");
@@ -313,12 +337,12 @@ static httpd_handle_t WiFiManager_Start_WebServer(WiFiManager_t *wifi_manager)
     return server;
 }
 
-esp_err_t WiFiManager_NVS_Write_STA(WiFiManager_t *wifi_manager)
+esp_err_t WiFiManager_NVS_WriteSTA(WiFiManager_t *wifi_manager)
 {
     nvs_handle_t nvs_handle;
     esp_err_t ret;
 
-    wifi_sta_config_t sta = wifi_manager->conf.sta;
+    wifi_sta_config_t *sta = &wifi_manager->conf.sta;
 
     ret = nvs_open(ESP_WIFI_NVS_STA_NAMESPACE, NVS_READWRITE, &nvs_handle);
     if (ret != ESP_OK)
@@ -329,26 +353,44 @@ esp_err_t WiFiManager_NVS_Write_STA(WiFiManager_t *wifi_manager)
 
     // Save the STA configuration
     ESP_LOGI(TAG, "[NVS] - Writing data to NVS...");
-    ret = nvs_set_blob(nvs_handle, "sta", &sta, sizeof(wifi_sta_config_t));
+
+    ret = nvs_set_str(nvs_handle, "ssid", (const char *)sta->ssid);
     if (ret != ESP_OK)
     {
-        ESP_LOGE(TAG, "[NVS] - Error (%s) in writing data to NVS", esp_err_to_name(ret));
-        return ret;
+        goto write_error;
     }
+    ret = nvs_set_str(nvs_handle, "password", (const char *)sta->password);
+    if (ret != ESP_OK)
+    {
+        goto write_error;
+    }
+    /*
+        ret = nvs_set_u8(nvs_handle, "authmode", sta->threshold.authmode);
+        if (ret != ESP_OK)
+        {
+            goto write_error;
+        }
+    */
 
     // Commit the change
     ret = nvs_commit(nvs_handle);
     if (ret != ESP_OK)
     {
-        ESP_LOGE(TAG, "[NVS] - Failed to commit data");
+        ESP_LOGE(TAG, "[NVS] - Failed to commit: %s", esp_err_to_name(ret));
         return ret;
     }
 
     nvs_close(nvs_handle);
+    ESP_LOGI(TAG, "[NVS] - STA config saved successfully");
     return ESP_OK;
+
+write_error:
+    ESP_LOGE(TAG, "[NVS] - Error (%s) writing data to NVS", esp_err_to_name(ret));
+    nvs_close(nvs_handle);
+    return ret;
 }
 
-esp_err_t WiFiManager_NVS_Read_STA(WiFiManager_t *wifi_manager)
+esp_err_t WiFiManager_NVS_ReadSTA(WiFiManager_t *wifi_manager)
 {
     nvs_handle_t nvs_handle;
     esp_err_t ret;
@@ -356,24 +398,50 @@ esp_err_t WiFiManager_NVS_Read_STA(WiFiManager_t *wifi_manager)
     ret = nvs_open(ESP_WIFI_NVS_STA_NAMESPACE, NVS_READONLY, &nvs_handle);
     if (ret != ESP_OK)
     {
-        ESP_LOGE(TAG, "[NVS] - Error (%s) when open NVS handle!", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "[NVS] - Error (%s) when opening NVS handle!", esp_err_to_name(ret));
         return ret;
     }
 
-    wifi_sta_config_t sta;
-    size_t sta_size = sizeof(wifi_sta_config_t);
-    ret = nvs_get_blob(nvs_handle, "sta", &sta, &sta_size);
-    if (ret == ESP_OK)
+    wifi_sta_config_t *sta = &wifi_manager->conf.sta;
+
+    memset(sta, 0, sizeof(wifi_sta_config_t));
+
+    size_t ssid_len = sizeof(sta->ssid);
+    ret = nvs_get_str(nvs_handle, "ssid", (char *)sta->ssid, &ssid_len);
+    if (ret != ESP_OK)
     {
-        wifi_manager->conf.sta = sta;
+        if (ret == ESP_ERR_NVS_NOT_FOUND)
+        {
+            ESP_LOGW(TAG, "[NVS] - No saved STA config found");
+        }
+        else
+        {
+            ESP_LOGE(TAG, "[NVS] - Error reading ssid: %s", esp_err_to_name(ret));
+        }
+        nvs_close(nvs_handle);
+        return ret;
     }
-    else if (ret == ESP_ERR_NVS_NOT_FOUND)
+
+    size_t psw_len = sizeof(sta->password);
+    if (psw_len > 0)
     {
-        ESP_LOGW(TAG, "[NVS] - STA data not found");
+        sta->threshold.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    }
+    else if (psw_len == 0)
+    {
+        sta->threshold.authmode = WIFI_AUTH_OPEN;
+    }
+
+    ret = nvs_get_str(nvs_handle, "password", (char *)sta->password, &psw_len);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "[NVS] - Error reading password: %s", esp_err_to_name(ret));
+        nvs_close(nvs_handle);
         return ret;
     }
 
     nvs_close(nvs_handle);
+    ESP_LOGI(TAG, "[NVS] - STA config loaded: SSID: %s", sta->ssid);
     return ESP_OK;
 }
 
@@ -575,14 +643,13 @@ void WiFiManager_WiFi_Deinit(WiFiManager_t *wifi_manager)
 
 void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager)
 {
-    wifi_manager->conf.ap = ESP_WIFI_AP_CONFIG_DEFAULT();
-    WiFiManager_WiFi_Init(wifi_manager);
     xEventGroupClearBits(wifi_manager->event.group, ESP_WIFI_EVENT_BIT_STACONF_START);
 
     WiFiManager_AP_Start(wifi_manager);
     xEventGroupWaitBits(wifi_manager->event.group, ESP_WIFI_EVENT_BIT_APSTART, pdFALSE, pdFALSE, portMAX_DELAY);
+    vTaskDelay(pdMS_TO_TICKS(200));
 
-    WiFiManager_DHCP_Set_CaptivePortal_URL();
+    WiFiManager_DHCP_Set_CaptivePortal_URL(wifi_manager);
     WiFiManager_Start_WebServer(wifi_manager);
     dns_server_config_t config = DNS_SERVER_CONFIG_SINGLE("*", "WIFI_AP_DEF");
     start_dns_server(&config);
@@ -592,8 +659,8 @@ void WiFiManager_STA_ConfigViaAP(WiFiManager_t *wifi_manager)
     vTaskDelay(pdMS_TO_TICKS(200));
     WiFiManager_WiFi_Stop(wifi_manager);
 
-    vTaskDelay(pdMS_TO_TICKS(50));
-    WiFiManager_NVS_Read_STA(wifi_manager);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    WiFiManager_NVS_ReadSTA(wifi_manager); // Chưa tối ưu, phải đọc từ NVS
 
     ESP_LOGI(TAG, "[STA_ConfigViaAP] Switch to STA Mode");
     WiFiManager_STA_Start(wifi_manager);
