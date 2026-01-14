@@ -16,33 +16,5 @@
     "--compile-commands-dir=${workspaceFolder}\\build"
   ],
   "idf.portWin": "COM3",
-  "idf.flashType": "UART",
-  "files.associations": {
-    "param.h": "c",
-    "ss_wifi.h": "c",
-    "esp_http_server.h": "c",
-    "wifi_manager.h": "c",
-    "gpio.h": "c",
-    "nvs_flash.h": "c",
-    "button_handler.h": "c",
-    "freertos.h": "c",
-    "task.h": "c",
-    "esp_wifi.h": "c",
-    "led_handler.h": "c",
-    "http_client.h": "c",
-    "esp_http_client.h": "c",
-    "cjson.h": "c",
-    "esp_log.h": "c",
-    "random": "c",
-    "array": "c",
-    "string": "c",
-    "string_view": "c",
-    "span": "c",
-    "sdkconfig.h": "c",
-    "esp_event.h": "c",
-    "bh1750_sensor.h": "c",
-    "bitset": "c",
-    "esp_macros.h": "c",
-    "esp_netif.h": "c"
-  }
+  "idf.flashType": "UART"
 }
