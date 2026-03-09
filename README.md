@@ -19,9 +19,7 @@ The device performs the following workflow:
 
 ## Architecture
 
-<p align="center">
-  <img src="docs/images/system-architecture.png" width="700">
-</p>
+![System Architecture](https://github.com/hphuc15/2SL_Incoming/docs/images/system-architecture.png)
 ---
 
 # Repository Structure
