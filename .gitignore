@@ -1,7 +1,3 @@
-/vscode/
-# Test
-/test/
-# ESP-IDF
-/firmware/build/
-/firmware/.vscode/
-/firmware/.devcontainer/
+.vscode
+
+/tests
