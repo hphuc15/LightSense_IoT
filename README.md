@@ -20,7 +20,12 @@ The device performs the following workflow:
 ## Architecture
 
 ![System Architecture](https://github.com/hphuc15/2SL_Incoming/blob/main/docs/images/system-architecture.png)
+
 ---
+
+## Demo Video
+A demonstration of the system in operation is available here:
+https://www.dropbox.com/scl/fi/7f4b1ly5y1521wl9tqmsf/demo.mov?rlkey=rvbx1iyley5a7ft38qhafbs46&st=nw4uodkt&dl=0
 
 # Repository Structure
 
